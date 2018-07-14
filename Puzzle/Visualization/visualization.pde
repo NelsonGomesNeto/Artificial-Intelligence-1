@@ -1,7 +1,10 @@
+import java.util.Map;
 int table[][] = new int[1024][1024];
-int size, biggest; float blockSize;
+int size, biggest, sqn; float blockSize;
 int[] dy = {1, 0, -1, 0}, dx = {0, -1, 0, 1};
 int ni, nj, startTime = millis(), endTime = -1, rainbow;
+int minSteps;
+HashMap<Long, int> visitedMap = new HashMap<Long, int>();
 
 int solved() {
   for (int i = 0, k = 1; i < size; i ++)
@@ -15,7 +18,7 @@ int solved() {
 
 void setup() {
   String[] lines = loadStrings("./../in");
-  size = int(lines[0]);
+  size = int(lines[0]); sqn = size * size;
   biggest = size * size - 1;
   size(900, 900);
   blockSize = float(min(height, width)) / size;
@@ -58,6 +61,7 @@ void movement(int dir, int i, int j) {
   table[i][j] = table[i + dy[dir]][j + dx[dir]];
   table[i + dy[dir]][j + dx[dir]] = aux;
   ni += dy[dir]; nj += dx[dir];
+  minSteps ++;
 }
 
 void keyReleased() {
@@ -88,13 +92,25 @@ void scramble() {
     table[ni + dy[dir]][nj + dx[dir]] = aux;
     ni += dy[dir]; nj += dx[dir];
   }
-  startTime = millis(); endTime = -1;
+  startTime = millis(); endTime = -1; minSteps = 0;
 }
 
 void startSolve() {
-  solve();
+  dfs(ni, nj, 0);
 }
 
-void solve() {
+Long state() {
+  Long nowState = 0, k = 1;
+  for (int i = 0; i < size; i ++)
+    for (int j = 0; j < size; j ++, j *= sqn)
+      nowState += k * table[i][j];
+  return(nowState);
+}
 
+void dfs(int i, int j, int now) {
+  if (i == size - 1 && j == size - 1 && solved()) {
+    minSteps = now;
+    return(1);
+  }
+  long notState = state();
 }

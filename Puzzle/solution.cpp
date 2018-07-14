@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+#include <sys/resource.h>
 #define DEBUG if(0)
 #define lli long long int
 using namespace std;
@@ -34,6 +35,7 @@ lli state()
   for (int i = 0; i < n; i ++)
     for (int j = 0; j < n; j ++, k *= sqn)
       nowState += k * table[i][j];
+  if (nowState < 0) printf("%lld\n", nowState);
   return(nowState);
 }
 
@@ -85,10 +87,14 @@ int dfs(int i, int j, int now)
 
 int main()
 {
+  rlimit R;
+  getrlimit(RLIMIT_STACK, &R);
+  R.rlim_cur = R.rlim_max;
+  setrlimit(RLIMIT_STACK, &R);
   srand(time(NULL));
   // visited = (int*) malloc((int) 4e8 * nof(int));
   // memset(visited, 0, (int) 4e8 * nof(int));
-  scanf("%d", &n); sqn = n * n;
+  scanf("%d", &n); sqn = 9;
   while (1)
   {
     scramble();
