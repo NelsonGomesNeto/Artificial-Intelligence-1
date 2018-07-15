@@ -173,7 +173,7 @@ double euclideanDistance()
   return(dist);
 }
 
-void astar(int i, int j, double (*heuristic)())
+void aStar(int i, int j, double (*heuristic)())
 {
   pq.push({table, {0, heuristic()}});
   while (!pq.empty())
@@ -232,14 +232,14 @@ int main()
     // table = aux;
     // printf("A* (manhattanDistance):\n");
     // visitedSet.clear();
-    // astar(si, sj, manhattanDistance);
+    // aStar(si, sj, manhattanDistance);
     // printf("\tReached %ld different states\n", visitedSet.size());
     // printf("\tTook %d steps\n\n", minSteps);
 
     table = aux;
     printf("A* (euclideanDistance):\n");
     visitedSet.clear();
-    astar(si, sj, euclideanDistance);
+    aStar(si, sj, euclideanDistance);
     printf("\tReached %ld different states\n", visitedSet.size());
     printf("\tTook %d steps\n\n", minSteps);
   }
