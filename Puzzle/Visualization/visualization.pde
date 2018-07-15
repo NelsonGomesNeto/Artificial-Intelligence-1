@@ -5,10 +5,10 @@ import java.util.ArrayDeque;
 int table[][] = new int[1024][1024];
 int size, sqSize, biggest; float blockSize;
 int[] dy = {1, 0, -1, 0}, dx = {0, -1, 0, 1};
-int ni, nj, startTime = millis(), endTime = -1, rainbow, waitTime = 0;
+int ni, nj, startTime = millis(), endTime = -1, rainbow, waitTime = 100;
 int minSteps;
 Set<String> visitedSet = new HashSet<String>();
-Queue<int[]> queue = new ArrayDeque<int[]>();
+Queue<int[][]> queue = new ArrayDeque<int[][]>();
 
 boolean solved() {
   for (int i = 0, k = 1; i < size; i ++)
@@ -31,7 +31,6 @@ void setup() {
   textSize(blockSize / 2.34);
 
   scramble();
-  noLoop();
 }
 
 void drawBlock(int i, int j) {
@@ -138,31 +137,26 @@ boolean dfs(int i, int j, int now) {
 
 void bfs() {
   queue.clear();
-  int[] aux = new int[sqSize];
-  for (int i = 0; i < size; i ++) for (int j = 0; j < size; j ++) aux[i*size + j] = table[i][j];
-  queue.add(aux.clone());
+  queue.add(table.clone());
 
   while (queue.size() > 0) {
+    print("Entered\n");
     int bi = 0, bj = 0;
-    // for (int i = 0; i < sqSize; i ++) aux[i] = queue.peek()[i]; queue.remove();
-    aux = queue.poll();
+    table = queue.poll();
     delay(waitTime);
-    for (int i = 0; i < size; i ++) for (int j = 0; j < size; j ++) {
-      table[i][j] = aux[i*size + j];
-      if (table[i][j] == 0) { bi = i; bj = j; }
-    }
-    String nowState = state();
+    for (int i = 0; i < size; i ++) for (int j = 0; j < size; j ++) if (table[i][j] == 0) { bi = i; bj = j; }
     if (solved()) break;
-    if (visitedSet.contains(nowState)) continue;
-    visitedSet.add(nowState);
 
     for (int k = 0; k < 4; k ++)
       if (!invalid(bi + dy[k], bj + dx[k])) {
         int aa = table[bi][bj]; table[bi][bj] = table[bi + dy[k]][bj + dx[k]]; table[bi + dy[k]][bj + dx[k]] = aa;
-        for (int i = 0; i < size; i ++) for (int j = 0; j < size; j ++) aux[i*size + j] = table[i][j];
+        String nowState = state();
+        if (!visitedSet.contains(nowState)) {
+          visitedSet.add(nowState);
+          queue.add(table.clone());
+        }
         aa = table[bi][bj]; table[bi][bj] = table[bi + dy[k]][bj + dx[k]]; table[bi + dy[k]][bj + dx[k]] = aa;
-        queue.add(aux.clone());
       }
   }
-  print("Solved\n");
+  print("Solved" + str(solved()) + "\n");
 }
