@@ -1,14 +1,16 @@
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Queue;
+import java.util.Stack;
 import java.util.ArrayDeque;
-int table[][] = new int[1024][1024];
+int table[][];
 int size, sqSize, biggest; float blockSize;
 int[] dy = {1, 0, -1, 0}, dx = {0, -1, 0, 1};
-int ni, nj, startTime = millis(), endTime = -1, rainbow, waitTime = 100;
+int ni, nj, startTime = millis(), endTime = -1, rainbow, waitTime = 0;
 int minSteps;
 Set<String> visitedSet = new HashSet<String>();
 Queue<int[][]> queue = new ArrayDeque<int[][]>();
+Stack<int[][]> stack = new Stack<int[][]>();
 
 boolean solved() {
   for (int i = 0, k = 1; i < size; i ++)
@@ -23,6 +25,7 @@ boolean solved() {
 void setup() {
   String[] lines = loadStrings("./../in");
   size = int(lines[0]); sqSize = size * size;
+  table = new int[size][size];
   biggest = size * size - 1;
   size(900, 900);
   blockSize = float(min(height, width)) / size;
@@ -104,43 +107,82 @@ void scramble() {
 }
 
 void startSolve() {
-  // dfs(ni, nj, 0);
+  startTime = millis(); endTime = -1;
+  visitedSet.clear();
+  int[][] aux = new int[size][size]; for (int i = 0; i < size; i ++) aux[i] = table[i].clone();
+  // dfsRecursive(ni, nj, 0);
+  dfsStack();
+  print("DFS done, states: " + str(visitedSet.size()) + "\n");
+
+  delay(5000);
+
+  startTime = millis(); endTime = -1;
+  for (int i = 0; i < size; i ++) table[i] = aux[i].clone();
+  visitedSet.clear();
   bfs();
+  print("BFS done, states: " + str(visitedSet.size()) + "\n");
 }
 
 String state() {
-  String nowState = "|";
+  String nowState = "";
   for (int i = 0; i < size; i ++)
     for (int j = 0; j < size; j ++)
       nowState += str(table[i][j]) + "|";
   return(nowState);
 }
 
-boolean dfs(int i, int j, int now) {
+boolean dfsRecursive(int i, int j, int now) {
   if (i == size - 1 && j == size - 1 && solved()) {
     minSteps = now;
     return(true);
   }
   String nowState = state();
-  if (visitedSet.contains(nowState)) { print("Holly\n"); delay(10000); return(false); };
+  if (visitedSet.contains(nowState)) { return(false); };
   visitedSet.add(nowState);
 
   delay(waitTime);
   for (int k = 0; k < 4; k ++)
     if (!invalid(i + dy[k], j + dx[k])) {
       int aux = table[i][j]; table[i][j] = table[i + dy[k]][j + dx[k]]; table[i + dy[k]][j + dx[k]] = aux;
-      if (dfs(i + dy[k], j + dx[k], now + 1)) return(true);
+      if (dfsRecursive(i + dy[k], j + dx[k], now + 1)) return(true);
       aux = table[i][j]; table[i][j] = table[i + dy[k]][j + dx[k]]; table[i + dy[k]][j + dx[k]] = aux;
     }
   return(false);
 }
 
+void dfsStack() {
+  stack.clear();
+  stack.push(table.clone());
+  int[][] aux;
+
+  while (stack.size() > 0) {
+    int bi = 0, bj = 0;
+    table = stack.pop();
+    delay(waitTime);
+    for (int i = 0; i < size; i ++) for (int j = 0; j < size; j ++) if (table[i][j] == 0) { bi = i; bj = j; }
+    if (solved()) break;
+
+    for (int k = 0; k < 4; k ++)
+      if (!invalid(bi + dy[k], bj + dx[k])) {
+        int aa = table[bi][bj]; table[bi][bj] = table[bi + dy[k]][bj + dx[k]]; table[bi + dy[k]][bj + dx[k]] = aa;
+        String nowState = state();
+        // print(nowState + " : " + visitedSet.contains(nowState) + "\n");
+        if (!visitedSet.contains(nowState)) {
+          visitedSet.add(nowState);
+          aux = new int[size][size]; for (int i = 0; i < size; i ++) aux[i] = table[i].clone();
+          stack.push(aux);
+        }
+        aa = table[bi][bj]; table[bi][bj] = table[bi + dy[k]][bj + dx[k]]; table[bi + dy[k]][bj + dx[k]] = aa;
+      }
+  }
+}
+
 void bfs() {
   queue.clear();
   queue.add(table.clone());
+  int[][] aux;
 
   while (queue.size() > 0) {
-    print("Entered\n");
     int bi = 0, bj = 0;
     table = queue.poll();
     delay(waitTime);
@@ -151,12 +193,13 @@ void bfs() {
       if (!invalid(bi + dy[k], bj + dx[k])) {
         int aa = table[bi][bj]; table[bi][bj] = table[bi + dy[k]][bj + dx[k]]; table[bi + dy[k]][bj + dx[k]] = aa;
         String nowState = state();
+        // print(nowState + " : " + visitedSet.contains(nowState) + "\n");
         if (!visitedSet.contains(nowState)) {
           visitedSet.add(nowState);
-          queue.add(table.clone());
+          aux = new int[size][size]; for (int i = 0; i < size; i ++) aux[i] = table[i].clone();
+          queue.add(aux);
         }
         aa = table[bi][bj]; table[bi][bj] = table[bi + dy[k]][bj + dx[k]]; table[bi + dy[k]][bj + dx[k]] = aa;
       }
   }
-  print("Solved" + str(solved()) + "\n");
 }
