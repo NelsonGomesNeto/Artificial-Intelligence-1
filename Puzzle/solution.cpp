@@ -167,6 +167,7 @@ double euclideanDistance()
   for (int i = 0; i < n; i ++)
     for (int j = 0; j < n; j ++)
     {
+      if (table[i][j] == 0) continue;
       int at = table[i][j] - 1;
       dist += sqrt(pow(at / n - i, 2) + pow(at % n - j, 2)); //sqrt
     }

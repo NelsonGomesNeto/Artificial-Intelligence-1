@@ -11,8 +11,8 @@ int size, sqSize, biggest; float blockSize;
 class ele {
   int table[][];
   int minSteps;
-  double h;
-  ele(int t[][], int m, double hh) {
+  float h;
+  ele(int t[][], int m, float hh) {
     table = new int[size][size];
     for (int i = 0; i < size; i ++) table[i] = t[i].clone();
     minSteps = m;
@@ -20,13 +20,17 @@ class ele {
   }
 }
 class eleComparator implements Comparator<ele> {
+  @Override
   int compare(ele a, ele b) {
-    return(int(a.h > b.h));
+    if (a.h > b.h) return(1);
+    else if (a.h < b.h) return(-1);
+    return(0);
   }
 }
 
 int[] dy = {1, 0, -1, 0}, dx = {0, -1, 0, 1};
-int ni, nj, startTime = millis(), endTime = -1, rainbow, waitTime = 0, minSteps = 0;
+int ni, nj, startTime = millis(), endTime = -1, rainbow, waitTime = 0, minSteps = 0, scrambleSteps = 1000;
+float nowDistance = 999;
 Set<String> visitedSet = new HashSet<String>();
 Queue<ele> queue = new ArrayDeque<ele>();
 Stack<ele> stack = new Stack<ele>();
@@ -35,10 +39,7 @@ PriorityQueue<ele> pq = new PriorityQueue<ele>(9999999, new eleComparator());
 boolean solved() {
   for (int i = 0, k = 1; i < size; i ++)
     for (int j = 0; j < size; j ++, k ++)
-    {
-      if (i == size - 1 && j == size - 1) continue;
       if (table[i][j] != k) return(false);
-    }
   return(true);
 }
 
@@ -47,7 +48,7 @@ void setup() {
   size = int(lines[0]); sqSize = size * size;
   table = new int[size][size];
   biggest = size * size - 1;
-  size(900, 900);
+  size(1400, 900);
   blockSize = float(min(height, width)) / size;
   colorMode(HSB, 360, 100, 100);
   textAlign(CENTER,CENTER);
@@ -65,10 +66,15 @@ void drawBlock(int i, int j) {
 }
 
 void draw() {
-  if (!solved())
+  if (!solved()) {
     for (int i = 0; i < size; i ++)
       for (int j = 0; j < size; j ++)
         drawBlock(i, j);
+    fill(230, 100, 100);
+    rect(width * 0.7, height * 0.05, 300, 200);
+    fill(0, 0, 0);
+    text(nfs(round(nowDistance*1000)/1000.0, 3, 3), width * 0.8, height * 0.1);
+  }
   else {
     background(rainbow % 360, 100, 100);
     rainbow = (rainbow + 4) % 36000;
@@ -82,28 +88,34 @@ boolean invalid(int i, int j) {
   return((i < 0 || j < 0 || i >= size || j >= size));
 }
 
-void movement(int dir, int i, int j) {
-  if (invalid(i + dy[dir], j + dx[dir])) return;
-  // print("WTF", table[i][j], dy[dir], dx[dir], "\n");
-  int aux = table[i][j];
-  table[i][j] = table[i + dy[dir]][j + dx[dir]];
-  table[i + dy[dir]][j + dx[dir]] = aux;
+void setBlackBlock() {
+  for (int i = 0; i < size; i ++)
+    for (int j = 0; j < size; j ++)
+      if (table[i][j] == sqSize) {
+        ni = i; nj = j;
+      }
+}
+
+void movement(int dir, int inc) {
+  if (invalid(ni + dy[dir], nj + dx[dir])) return;
+  int aux = table[ni][nj]; table[ni][nj] = table[ni + dy[dir]][nj + dx[dir]]; table[ni + dy[dir]][nj + dx[dir]] = aux;
   ni += dy[dir]; nj += dx[dir];
-  minSteps ++;
+  minSteps += inc;
 }
 
 void keyReleased() {
   if (keyCode == UP) {
-    movement(0, ni, nj);
+    movement(0, 1);
   } else if (keyCode == RIGHT) {
-    movement(1, ni, nj);
+    movement(1, 1);
   } else if (keyCode == DOWN) {
-    movement(2, ni, nj);
+    movement(2, 1);
   } else if (keyCode == LEFT) {
-    movement(3, ni, nj);
+    movement(3, 1);
   } else if (key == 'r') {
     visitedSet.clear();
     scramble();
+    startTime = millis(); endTime = -1; minSteps = 0;
   } else if (key == 's') {
     thread("startSolve");
   }
@@ -112,25 +124,22 @@ void keyReleased() {
 void scramble() {
   for (int i = 0, k = 1; i < size; i ++) for (int j = 0; j < size; j ++, k ++)
     table[i][j] = k;
-  table[size - 1][size - 1] = sqSize;
   ni = size - 1; nj = size - 1;
-  // table[size - 1][size - 2] = 0; table[size - 1][size - 1] = 8;
+  // table[size - 1][size - 1] = sqSize;
+  // table[size - 1][size - 2] = 16; table[size - 1][size - 1] = 15;
+  // ni = size - 1; nj = size - 2;
 
-  int s = 100;
+  int s = scrambleSteps;
   while (s -- > 0) {
     int dir; do dir = int(random(0, 4)); while (invalid(ni + dy[dir], nj + dx[dir]));
-    int aux = table[ni][nj];
-    table[ni][nj] = table[ni + dy[dir]][nj + dx[dir]];
-    table[ni + dy[dir]][nj + dx[dir]] = aux;
-    ni += dy[dir]; nj += dx[dir];
+    movement(dir, 0);
   }
-  startTime = millis(); endTime = -1; minSteps = 0;
 }
 
 void startSolve() {
   // startTime = millis(); endTime = -1; minSteps = 0;
   // visitedSet.clear();
-  // int[][] aux = new int[size][size]; for (int i = 0; i < size; i ++) aux[i] = table[i].clone();
+  int[][] aux = new int[size][size]; for (int i = 0; i < size; i ++) aux[i] = table[i].clone();
   // // dfsRecursive(ni, nj, 0);
   // dfsStack();
   // print("DFS done, states: " + str(visitedSet.size()) + "\n");
@@ -146,7 +155,7 @@ void startSolve() {
   // delay(5000);
 
   startTime = millis(); endTime = -1; minSteps = 0;
-  // for (int i = 0; i < size; i ++) table[i] = aux[i].clone();
+  for (int i = 0; i < size; i ++) table[i] = aux[i].clone();
   visitedSet.clear();
   aStar();
   print("A* (euclideanDistance) done, states: " + str(visitedSet.size()) + "\n");
@@ -156,7 +165,10 @@ String state() {
   String nowState = "";
   for (int i = 0; i < size; i ++)
     for (int j = 0; j < size; j ++)
-      nowState += str(table[i][j]) + "|";
+    {
+      nowState += str(table[i][j]);
+      if (i != size - 1 || j != size - 1) nowState += "|";
+    }
   return(nowState);
 }
 
@@ -172,9 +184,11 @@ boolean dfsRecursive(int i, int j, int now) {
   delay(waitTime);
   for (int k = 0; k < 4; k ++)
     if (!invalid(i + dy[k], j + dx[k])) {
-      int aux = table[i][j]; table[i][j] = table[i + dy[k]][j + dx[k]]; table[i + dy[k]][j + dx[k]] = aux;
+      ni = i; nj = j;
+      movement(k, 0);
       if (dfsRecursive(i + dy[k], j + dx[k], now + 1)) return(true);
-      aux = table[i][j]; table[i][j] = table[i + dy[k]][j + dx[k]]; table[i + dy[k]][j + dx[k]] = aux;
+      ni = i; nj = j;
+      movement((k + 2) % 4, 0);
     }
   return(false);
 }
@@ -184,22 +198,20 @@ void dfsStack() {
   stack.push(new ele(table, 0, 0));
 
   while (stack.size() > 0) {
-    int bi = 0, bj = 0;
-    table = stack.peek().table; minSteps = stack.peek().minSteps;
-    stack.pop();
+    table = stack.peek().table; minSteps = stack.peek().minSteps; stack.pop();
     delay(waitTime);
-    for (int i = 0; i < size; i ++) for (int j = 0; j < size; j ++) if (table[i][j] == sqSize) { bi = i; bj = j; }
+    setBlackBlock();
     if (solved()) break;
 
     for (int k = 0; k < 4; k ++)
-      if (!invalid(bi + dy[k], bj + dx[k])) {
-        int aa = table[bi][bj]; table[bi][bj] = table[bi + dy[k]][bj + dx[k]]; table[bi + dy[k]][bj + dx[k]] = aa;
+      if (!invalid(ni + dy[k], nj + dx[k])) {
+        movement(k, 0);
         String nowState = state();
         if (!visitedSet.contains(nowState)) {
           visitedSet.add(nowState);
           stack.push(new ele(table, minSteps + 1, 0));
         }
-        aa = table[bi][bj]; table[bi][bj] = table[bi + dy[k]][bj + dx[k]]; table[bi + dy[k]][bj + dx[k]] = aa;
+        movement((k + 2) % 4, 0);
       }
   }
 }
@@ -209,32 +221,33 @@ void bfs() {
   queue.add(new ele(table, 0, 0));
 
   while (queue.size() > 0) {
-    int bi = 0, bj = 0;
     table = queue.peek().table; minSteps = queue.peek().minSteps; queue.remove();
+    setBlackBlock();
     delay(waitTime);
-    for (int i = 0; i < size; i ++) for (int j = 0; j < size; j ++) if (table[i][j] == sqSize) { bi = i; bj = j; }
+
     if (solved()) break;
 
     for (int k = 0; k < 4; k ++)
-      if (!invalid(bi + dy[k], bj + dx[k])) {
-        int aa = table[bi][bj]; table[bi][bj] = table[bi + dy[k]][bj + dx[k]]; table[bi + dy[k]][bj + dx[k]] = aa;
+      if (!invalid(ni + dy[k], nj + dx[k])) {
+        movement(k, 0);
         String nowState = state();
         if (!visitedSet.contains(nowState)) {
           visitedSet.add(nowState);
           queue.add(new ele(table, minSteps + 1, 0));
         }
-        aa = table[bi][bj]; table[bi][bj] = table[bi + dy[k]][bj + dx[k]]; table[bi + dy[k]][bj + dx[k]] = aa;
+        movement((k + 2) % 4, 0);
       }
   }
 }
 
-double euclideanDistance() {
-  double dist = 0;
+float euclideanDistance() {
+  float dist = 0;
   for (int i = 0; i < size; i ++)
     for (int j = 0; j < size; j ++)
     {
+      if (table[i][j] == sqSize) continue;
       int at = table[i][j] - 1;
-      dist += sqrt(pow(int(at / size) - i, 2) + pow(at % size - j, 2)); //sqrt
+      dist += sqrt(pow(int(at / size) - i, 2) + pow((at % size) - j, 2)); //sqrt
     }
   return(dist);
 }
@@ -242,25 +255,23 @@ double euclideanDistance() {
 void aStar() {
   pq.clear();
   pq.add(new ele(table, 0, euclideanDistance()));
-  int bi = 0, bj = 0;
 
   while (pq.size() > 0) {
-    table = pq.peek().table; minSteps = pq.peek().minSteps; pq.poll();
+    table = pq.peek().table; minSteps = pq.peek().minSteps; nowDistance = pq.peek().h; pq.poll();
     delay(waitTime);
-    for (int i = 0; i < size; i ++) for (int j = 0; j < size; j ++) if (table[i][j] == sqSize) { bi = i; bj = j; }
+    setBlackBlock();
+    // for (int i = 0; i < size; i ++) for (int j = 0; j < size; j ++) if (table[i][j] == sqSize) { ni = i; nj = j; }
     if (solved()) break;
 
     for (int k = 0; k < 4; k ++)
-      if (!invalid(bi + dy[k], bj + dx[k])) {
-        int aa = table[bi][bj]; table[bi][bj] = table[bi + dy[k]][bj + dx[k]]; table[bi + dy[k]][bj + dx[k]] = aa;
+      if (!invalid(ni + dy[k], nj + dx[k])) {
+        movement(k, 0);
         String nowState = state();
-        // print(nowState + " " + euclideanDistance() + "\n");
-        // delay(10000);
         if (!visitedSet.contains(nowState)) {
           visitedSet.add(nowState);
           pq.add(new ele(table, minSteps + 1, euclideanDistance()));
         }
-        aa = table[bi][bj]; table[bi][bj] = table[bi + dy[k]][bj + dx[k]]; table[bi + dy[k]][bj + dx[k]] = aa;
+        movement((k + 2) % 4, 0);
       }
   }
 }
