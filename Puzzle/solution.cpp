@@ -174,6 +174,19 @@ double euclideanDistance()
   return(dist);
 }
 
+double newEuclideanDistance()
+{
+  double dist = 0;
+  for (int i = 0; i < n; i ++)
+    for (int j = 0; j < n; j ++)
+    {
+      if (table[i][j] == 0) continue;
+      int at = table[i][j] - 1;
+      dist += sqrt(pow(at / n - i, 3) + pow(at % n - j, 2)); //sqrt
+    }
+  return(dist);
+}
+
 void aStar(int i, int j, double (*heuristic)())
 {
   pq.push({table, {0, heuristic()}});
@@ -208,7 +221,7 @@ int main()
   srand(time(NULL));
 
   scanf("%d", &n); sqn = 9; int kk = 1;
-  for (int i = 0; i < n; i ++) table.push_back(vector<int>(n));
+  for (int i = 0; i < n; i ++) table.push_back(vector<int>(n)); int aa = 0, bb = 0, ss;
   while (kk)
   {
     scramble();
@@ -243,6 +256,16 @@ int main()
     aStar(si, sj, euclideanDistance);
     printf("\tReached %ld different states\n", visitedSet.size());
     printf("\tTook %d steps\n\n", minSteps);
+    ss = minSteps;
+
+    table = aux;
+    printf("A* (new):\n");
+    visitedSet.clear();
+    aStar(si, sj, newEuclideanDistance);
+    printf("\tReached %ld different states\n", visitedSet.size());
+    printf("\tTook %d steps\n\n", minSteps);
+    if (minSteps < ss) aa ++; else bb ++;
+    printf("old: %d, new: %d\n", bb, aa);
   }
   return(0);
 }

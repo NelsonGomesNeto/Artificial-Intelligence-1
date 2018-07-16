@@ -30,7 +30,7 @@ class eleComparator implements Comparator<ele> {
 
 int[] dy = {1, 0, -1, 0}, dx = {0, -1, 0, 1};
 int ni, nj, startTime = millis(), endTime = -1, rainbow, waitTime = 0, minSteps = 0, scrambleSteps = 1000;
-float nowDistance = 999;
+float nowDistance = -1;
 Set<String> visitedSet = new HashSet<String>();
 Queue<ele> queue = new ArrayDeque<ele>();
 Stack<ele> stack = new Stack<ele>();
@@ -48,7 +48,7 @@ void setup() {
   size = int(lines[0]); sqSize = size * size;
   table = new int[size][size];
   biggest = size * size - 1;
-  size(1400, 900);
+  size(1150, 900);
   blockSize = float(min(height, width)) / size;
   colorMode(HSB, 360, 100, 100);
   textAlign(CENTER,CENTER);
@@ -70,10 +70,10 @@ void draw() {
     for (int i = 0; i < size; i ++)
       for (int j = 0; j < size; j ++)
         drawBlock(i, j);
-    fill(230, 100, 100);
-    rect(width * 0.7, height * 0.05, 300, 200);
+    fill(230, 0, 100);
+    rect(width * 0.8, height * 0.05, 300, 100);
     fill(0, 0, 0);
-    text(nfs(round(nowDistance*1000)/1000.0, 3, 3), width * 0.8, height * 0.1);
+    text(nfs(round(nowDistance*1000)/1000.0, 2, 3), width * 0.9, height * 0.1);
   }
   else {
     background(rainbow % 360, 100, 100);
