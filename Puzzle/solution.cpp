@@ -182,7 +182,7 @@ double newEuclideanDistance()
     {
       if (table[i][j] == 0) continue;
       int at = table[i][j] - 1;
-      dist += sqrt(pow(at / n - i, 3) + pow(at % n - j, 2)); //sqrt
+      dist += (sqSize - table[i][j] + 1) * sqrt(pow(at / n - i, 2) + pow(at % n - j, 2));
     }
   return(dist);
 }
